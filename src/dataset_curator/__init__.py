@@ -6,6 +6,7 @@ from dataset_curator.curator import DatasetCurator
 from dataset_curator.metrics import (
     ClippingFilterStage,
     ContrastFilterStage,
+    CSVScoreFilterStage,
     EntropyFilterStage,
     FilterResult,
     NIQEFilterStage,
@@ -15,6 +16,8 @@ from dataset_curator.metrics import (
     compute_laplacian_variance,
     compute_luminance_std,
     compute_shannon_entropy,
+    evaluate_csv_score,
+    load_csv_scores,
 )
 from dataset_curator.pipeline import CascadedQualityGate, CurationAssessment
 from dataset_curator.preprocessing import (
@@ -33,6 +36,7 @@ __version__ = "0.1.0"
 __all__ = [
     "AuditEntry",
     "AuditLogger",
+    "CSVScoreFilterStage",
     "CascadedQualityGate",
     "ClippingFilterStage",
     "ContrastFilterStage",
@@ -52,7 +56,9 @@ __all__ = [
     "compute_luminance_std",
     "compute_shannon_entropy",
     "downsample_shorter_edge",
+    "evaluate_csv_score",
     "find_supported_images",
+    "load_csv_scores",
     "load_image",
     "preprocess_image",
     "save_image_lossless_png",

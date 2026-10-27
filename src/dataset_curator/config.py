@@ -26,6 +26,9 @@ class CurateConfig:
         png_compression: PNG compression level (0 is lossless uncompressed, 9 is maximum compression).
         filename_pattern: Format string for pristine output filenames.
         supported_formats: Tuple of supported file extensions (case-insensitive).
+        csv_score_path: Optional path to an external CSV file containing image quality scores.
+        csv_score_column: Optional column name in the external CSV containing quality scores.
+        min_csv_score: Minimum allowable quality score from external CSV (default: 0.7).
     """
 
     input_dir: Path
@@ -49,6 +52,16 @@ class CurateConfig:
         ".tiff",
         ".tif",
     )
+    csv_score_path: Path | None = None
+    csv_score_column: str | None = None
+    min_csv_score: float = 0.7
+
+    @property
+    def is_csv_score_enabled(self) -> bool:
+        """Indicates whether external CSV score filtering is enabled."""
+        return self.csv_score_path is not None and bool(
+            self.csv_score_column and self.csv_score_column.strip()
+        )
 
     def __post_init__(self) -> None:
         """Validate configuration settings and thresholds."""
@@ -76,6 +89,10 @@ class CurateConfig:
             )
         if self.max_niqe < 0.0:
             raise ValueError(f"max_niqe must be non-negative, got {self.max_niqe}")
+        if self.min_csv_score < 0.0:
+            raise ValueError(
+                f"min_csv_score must be non-negative, got {self.min_csv_score}"
+            )
         if not (0 <= self.png_compression <= 9):
             raise ValueError(
                 f"png_compression must be between 0 and 9, got {self.png_compression}"

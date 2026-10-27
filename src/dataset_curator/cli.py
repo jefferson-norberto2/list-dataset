@@ -89,6 +89,30 @@ def build_parser() -> argparse.ArgumentParser:
         default=3.5,
         help="Max allowable NIQE score (lower indicates higher perceptual quality).",
     )
+    parser.add_argument(
+        "--csv-score-path",
+        "--quality-csv",
+        dest="csv_score_path",
+        type=Path,
+        default=None,
+        help="Optional path to external CSV containing image quality scores.",
+    )
+    parser.add_argument(
+        "--csv-score-column",
+        "--quality-csv-column",
+        dest="csv_score_column",
+        type=str,
+        default=None,
+        help="Column name in external CSV containing the quality scores.",
+    )
+    parser.add_argument(
+        "--min-csv-score",
+        "--min-quality-score",
+        dest="min_csv_score",
+        type=float,
+        default=0.7,
+        help="Minimum allowable quality score from external CSV (default: 0.7).",
+    )
 
     # Execution & System parameters
     parser.add_argument(
@@ -156,6 +180,9 @@ def main(argv: list[str] | None = None) -> int:
             max_niqe=args.max_niqe,
             device=args.device,
             png_compression=args.png_compression,
+            csv_score_path=args.csv_score_path,
+            csv_score_column=args.csv_score_column,
+            min_csv_score=args.min_csv_score,
         )
 
         logger.info("Initializing dataset curation pipeline...")

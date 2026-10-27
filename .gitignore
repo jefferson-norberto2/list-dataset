@@ -28,3 +28,4 @@ htmlcov/
 *.log
 curation_audit.csv
 Datasets/
+.venv

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
@@ -11,6 +12,7 @@ from tqdm import tqdm
 
 from dataset_curator.audit import AuditEntry, AuditLogger
 from dataset_curator.config import CurateConfig
+from dataset_curator.metrics.csv_score import load_csv_scores
 from dataset_curator.pipeline import CascadedQualityGate
 from dataset_curator.preprocessing import (
     ImageLoadingError,
@@ -45,6 +47,15 @@ class DatasetCurator:
             audit_logger: Custom audit logger instance. Defaults to AuditLogger at config.audit_csv_path.
         """
         self.config = config
+        self.csv_scores: dict[str, float] | None = None
+        if config.is_csv_score_enabled:
+            assert config.csv_score_path is not None
+            assert config.csv_score_column is not None
+            self.csv_scores = load_csv_scores(
+                csv_path=config.csv_score_path,
+                score_column=config.csv_score_column,
+            )
+
         self.gate = gate or CascadedQualityGate(config=config)
         self.audit_logger = audit_logger or AuditLogger(csv_path=config.audit_csv_path)
 
@@ -64,19 +75,67 @@ class DatasetCurator:
             else image_path.name
         )
 
+        # 0. External CSV Quality Score Check (if configured)
+        score: float | None = None
+        if self.csv_scores is not None:
+            rel_norm = rel_name.replace("\\", "/")
+            if rel_name in self.csv_scores:
+                score = self.csv_scores[rel_name]
+            elif rel_norm in self.csv_scores:
+                score = self.csv_scores[rel_norm]
+            elif image_path.name in self.csv_scores:
+                score = self.csv_scores[image_path.name]
+            elif image_path.stem in self.csv_scores:
+                score = self.csv_scores[image_path.stem]
+            else:
+                logger.info("Image rejected: score not found in CSV (%s)", rel_name)
+                return self.audit_logger.record_entry(
+                    filename=rel_name,
+                    pristine=False,
+                    rejection_reason="csv_score_not_found",
+                    csv_score=None,
+                )
+
+            if math.isnan(score):
+                logger.info("Image rejected: score is NaN in CSV (%s)", rel_name)
+                return self.audit_logger.record_entry(
+                    filename=rel_name,
+                    pristine=False,
+                    rejection_reason="csv_score_nan",
+                    csv_score=None,
+                )
+
+            if score < self.config.min_csv_score:
+                logger.info(
+                    "Image rejected: low CSV quality score %.4f < %.4f (%s)",
+                    score,
+                    self.config.min_csv_score,
+                    rel_name,
+                )
+                return self.audit_logger.record_entry(
+                    filename=rel_name,
+                    pristine=False,
+                    rejection_reason="low_csv_score",
+                    csv_score=score,
+                )
+
         # 1. Image Loading
         try:
             image_rgb = load_image(image_path)
         except FileNotFoundError:
             logger.warning("Image file not found: %s", image_path)
-            return self.audit_logger.record_error(rel_name, "file_not_found")
+            return self.audit_logger.record_error(
+                rel_name, "file_not_found", csv_score=score
+            )
         except ImageLoadingError as exc:
             logger.warning("Unreadable or corrupted image (%s): %s", image_path, exc)
-            return self.audit_logger.record_error(rel_name, "corrupted_or_unreadable")
+            return self.audit_logger.record_error(
+                rel_name, "corrupted_or_unreadable", csv_score=score
+            )
         except Exception as exc:  # noqa: BLE001 - safeguard batch processing from unhandled image errors
             logger.error("Unexpected error loading image %s: %s", image_path, exc)
             return self.audit_logger.record_error(
-                rel_name, f"load_error: {type(exc).__name__}"
+                rel_name, f"load_error: {type(exc).__name__}", csv_score=score
             )
 
         # 2. Geometric Preprocessing (Lanczos4 downsampling + center crop)
@@ -90,15 +149,25 @@ class DatasetCurator:
             logger.info(
                 "Image rejected due to low resolution (%s): %s", image_path, exc
             )
-            return self.audit_logger.record_error(rel_name, "resolution_too_small")
+            return self.audit_logger.record_error(
+                rel_name, "resolution_too_small", csv_score=score
+            )
         except Exception as exc:  # noqa: BLE001 - safeguard batch processing from corrupted tensors
             logger.error("Unexpected error preprocessing image %s: %s", image_path, exc)
             return self.audit_logger.record_error(
-                rel_name, f"preprocessing_error: {type(exc).__name__}"
+                rel_name, f"preprocessing_error: {type(exc).__name__}", csv_score=score
             )
 
         # 3. Cascaded Quality Gate
-        assessment = self.gate.evaluate(crop_rgb)
+        try:
+            assessment = self.gate.evaluate(
+                crop_rgb, filename=rel_name, csv_score=score
+            )
+        except TypeError:
+            assessment = self.gate.evaluate(crop_rgb)
+
+        if assessment.csv_score is None and score is not None:
+            assessment.csv_score = score
 
         # 4. Artifact Handling
         saved_path_str = ""
@@ -119,7 +188,7 @@ class DatasetCurator:
             except Exception as exc:  # noqa: BLE001 - handle filesystem or permission errors gracefully
                 logger.error("Failed to save accepted image %s: %s", destination, exc)
                 return self.audit_logger.record_error(
-                    rel_name, f"save_error: {type(exc).__name__}"
+                    rel_name, f"save_error: {type(exc).__name__}", csv_score=score
                 )
         else:
             logger.info(

@@ -3,6 +3,11 @@
 from dataset_curator.metrics.base import FilterResult, QualityFilterStage
 from dataset_curator.metrics.clipping import ClippingFilterStage, compute_clipping_ratio
 from dataset_curator.metrics.contrast import ContrastFilterStage, compute_luminance_std
+from dataset_curator.metrics.csv_score import (
+    CSVScoreFilterStage,
+    evaluate_csv_score,
+    load_csv_scores,
+)
 from dataset_curator.metrics.entropy import EntropyFilterStage, compute_shannon_entropy
 from dataset_curator.metrics.niqe import NIQEFilterStage
 from dataset_curator.metrics.sharpness import (
@@ -11,6 +16,7 @@ from dataset_curator.metrics.sharpness import (
 )
 
 __all__ = [
+    "CSVScoreFilterStage",
     "ClippingFilterStage",
     "ContrastFilterStage",
     "EntropyFilterStage",
@@ -22,4 +28,6 @@ __all__ = [
     "compute_laplacian_variance",
     "compute_luminance_std",
     "compute_shannon_entropy",
+    "evaluate_csv_score",
+    "load_csv_scores",
 ]

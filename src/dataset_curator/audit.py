@@ -20,6 +20,7 @@ class AuditEntry:
     filename: str
     pristine: bool
     rejection_reason: str
+    csv_score: float | None = None
     clipping_ratio: float | None = None
     luminance_std: float | None = None
     entropy: float | None = None
@@ -33,6 +34,7 @@ class AuditEntry:
             "filename": self.filename,
             "pristine": str(self.pristine),
             "rejection_reason": self.rejection_reason,
+            "csv_score": f"{self.csv_score:.4f}" if self.csv_score is not None else "",
             "clipping_ratio": f"{self.clipping_ratio:.6f}"
             if self.clipping_ratio is not None
             else "",
@@ -57,6 +59,7 @@ class AuditLogger:
         "filename",
         "pristine",
         "rejection_reason",
+        "csv_score",
         "clipping_ratio",
         "luminance_std",
         "entropy",
@@ -106,6 +109,7 @@ class AuditLogger:
             filename=filename,
             pristine=assessment.is_pristine,
             rejection_reason=assessment.rejection_reason,
+            csv_score=assessment.csv_score,
             clipping_ratio=assessment.clipping_ratio,
             luminance_std=assessment.luminance_std,
             entropy=assessment.entropy,
@@ -122,16 +126,56 @@ class AuditLogger:
 
         return entry
 
+    def record_entry(
+        self,
+        filename: str,
+        pristine: bool,
+        rejection_reason: str,
+        csv_score: float | None = None,
+        output_path: str = "",
+    ) -> AuditEntry:
+        """Records an explicit audit entry to the CSV log.
+
+        Args:
+            filename: Source file name or relative path.
+            pristine: Whether the image passed all curation criteria.
+            rejection_reason: Reason for rejection, or 'accepted'.
+            csv_score: Optional quality score from external CSV.
+            output_path: Saved crop file path if accepted, else empty string.
+
+        Returns:
+            AuditEntry: The logged audit record.
+        """
+        self._ensure_file_initialized()
+
+        entry = AuditEntry(
+            filename=filename,
+            pristine=pristine,
+            rejection_reason=rejection_reason,
+            csv_score=csv_score,
+            output_path=output_path,
+        )
+
+        self.entries.append(entry)
+
+        with open(self.csv_path, mode="a", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=self.FIELDNAMES)
+            writer.writerow(entry.to_row())
+
+        return entry
+
     def record_error(
         self,
         filename: str,
         error_reason: str,
+        csv_score: float | None = None,
     ) -> AuditEntry:
         """Records an unprocessable or corrupted file in the audit log.
 
         Args:
             filename: Source file name or path.
             error_reason: Reason why the file could not be processed.
+            csv_score: Optional quality score from external CSV (default: None).
 
         Returns:
             AuditEntry: The recorded audit record.
@@ -142,6 +186,7 @@ class AuditLogger:
             filename=filename,
             pristine=False,
             rejection_reason=error_reason,
+            csv_score=csv_score,
             output_path="",
         )
 

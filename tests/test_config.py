@@ -22,6 +22,58 @@ class TestCurateConfigValidation:
         assert cfg.min_entropy == 7.0
         assert cfg.min_laplacian_var == 120.0
         assert cfg.max_niqe == 3.5
+        assert cfg.csv_score_path is None
+        assert cfg.csv_score_column is None
+        assert cfg.min_csv_score == 0.7
+        assert cfg.is_csv_score_enabled is False
+
+    def test_csv_score_enabled_logic(self, tmp_path: Path) -> None:
+        """Verifies is_csv_score_enabled property logic."""
+        # Neither provided
+        cfg0 = CurateConfig(input_dir=tmp_path, output_dir=tmp_path)
+        assert cfg0.is_csv_score_enabled is False
+        assert cfg0.min_csv_score == 0.7
+
+        # Only path provided
+        cfg1 = CurateConfig(
+            input_dir=tmp_path,
+            output_dir=tmp_path,
+            csv_score_path=tmp_path / "scores.csv",
+        )
+        assert cfg1.is_csv_score_enabled is False
+
+        # Only column provided
+        cfg2 = CurateConfig(
+            input_dir=tmp_path,
+            output_dir=tmp_path,
+            csv_score_column="score",
+        )
+        assert cfg2.is_csv_score_enabled is False
+
+        # Path provided but empty or whitespace column
+        cfg_empty = CurateConfig(
+            input_dir=tmp_path,
+            output_dir=tmp_path,
+            csv_score_path=tmp_path / "scores.csv",
+            csv_score_column="   ",
+        )
+        assert cfg_empty.is_csv_score_enabled is False
+
+        # Both provided
+        cfg3 = CurateConfig(
+            input_dir=tmp_path,
+            output_dir=tmp_path,
+            csv_score_path=tmp_path / "scores.csv",
+            csv_score_column="score",
+        )
+        assert cfg3.is_csv_score_enabled is True
+
+    def test_invalid_crop_size(self, tmp_path: Path) -> None:
+        """Non-positive crop dimensions raise ValueError."""
+        with pytest.raises(ValueError, match="crop_size dimensions must be positive"):
+            CurateConfig(input_dir=tmp_path, output_dir=tmp_path, crop_size=(0, 512))
+        with pytest.raises(ValueError, match="crop_size dimensions must be positive"):
+            CurateConfig(input_dir=tmp_path, output_dir=tmp_path, crop_size=(512, -1))
 
     def test_invalid_target_dim(self, tmp_path: Path) -> None:
         """Non-positive target_dim raises ValueError."""
@@ -59,3 +111,5 @@ class TestCurateConfigValidation:
             )
         with pytest.raises(ValueError, match="max_niqe must be non-negative"):
             CurateConfig(input_dir=tmp_path, output_dir=tmp_path, max_niqe=-1.0)
+        with pytest.raises(ValueError, match="min_csv_score must be non-negative"):
+            CurateConfig(input_dir=tmp_path, output_dir=tmp_path, min_csv_score=-0.1)

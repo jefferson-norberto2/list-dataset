@@ -4,9 +4,11 @@ from dataset_curator.curator import DatasetCurator
 
 # 1. Custom Configuration
 config = CurateConfig(
-    input_dir=Path("Datasets/UHD-IQA-database/training"),
-    output_dir=Path("Datasets/pristines"),
-    audit_csv_path=Path("Datasets/pristines/audit.csv"),
+    input_dir=Path("Datasets/UHD-IQA-database/validation"),
+    output_dir=Path("Datasets/pristine2"),
+    audit_csv_path=Path("Datasets/pristine2/audit_validation.csv"),
+    csv_score_column="quality_mos",
+    csv_score_path=Path("Datasets/UHD-IQA-database/uhd-iqa-metadata.csv"),
     target_dim=1800,
     crop_size=(1800, 1800),
     max_clipping_ratio=0.01,

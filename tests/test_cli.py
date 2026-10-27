@@ -111,3 +111,73 @@ class TestCLIIntegration:
 
         assert rows["case_small.png"]["pristine"] == "False"
         assert rows["case_small.png"]["rejection_reason"] == "resolution_too_small"
+
+    def test_cli_csv_score_filtering(self, tmp_path: Path) -> None:
+        """Executes the CLI with external CSV quality score filtering enabled."""
+        input_dir = tmp_path / "raw_csv"
+        output_dir = tmp_path / "pristine_csv"
+        audit_csv = tmp_path / "audit_csv.csv"
+        scores_csv = tmp_path / "quality_scores.csv"
+        input_dir.mkdir()
+
+        # Create 2 valid images
+        img1 = np.full((600, 600, 3), 128, dtype=np.uint8)
+        img2 = np.full((600, 600, 3), 128, dtype=np.uint8)
+        cv2.imwrite(str(input_dir / "high_qual.png"), img1)
+        cv2.imwrite(str(input_dir / "low_qual.png"), img2)
+
+        scores_csv.write_text(
+            "filename,score\nhigh_qual.png,0.92\nlow_qual.png,0.55\n",
+            encoding="utf-8",
+        )
+
+        # Run with quality-csv aliases
+        exit_code = main(
+            [
+                "--input-dir",
+                str(input_dir),
+                "--output-dir",
+                str(output_dir),
+                "--audit-csv",
+                str(audit_csv),
+                "--quality-csv",
+                str(scores_csv),
+                "--quality-csv-column",
+                "score",
+                "--min-quality-score",
+                "0.7",
+                "--quiet",
+            ]
+        )
+
+        assert exit_code == 0
+        assert audit_csv.is_file()
+
+        with open(audit_csv, mode="r", encoding="utf-8") as f:
+            rows = {r["filename"]: r for r in csv.DictReader(f)}
+
+        assert len(rows) == 2
+        # low_qual was rejected by CSV score before downstream
+        assert rows["low_qual.png"]["pristine"] == "False"
+        assert rows["low_qual.png"]["rejection_reason"] == "low_csv_score"
+        assert rows["low_qual.png"]["csv_score"] == "0.5500"
+
+        # high_qual passed CSV score (0.9200)
+        assert rows["high_qual.png"]["csv_score"] == "0.9200"
+
+    def test_cli_failure_on_missing_csv(self, tmp_path: Path) -> None:
+        """CLI returns exit code 1 when the specified score CSV is not found."""
+        exit_code = main(
+            [
+                "--input-dir",
+                str(tmp_path),
+                "--output-dir",
+                str(tmp_path / "out"),
+                "--csv-score-path",
+                str(tmp_path / "nonexistent.csv"),
+                "--csv-score-column",
+                "score",
+                "--quiet",
+            ]
+        )
+        assert exit_code == 1
