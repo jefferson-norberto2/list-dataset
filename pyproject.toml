@@ -18,6 +18,7 @@ dependencies = [
     "tqdm>=4.66.0",
     "torch>=2.0.0",
     "pyiqa>=0.1.8",
+    "scikit-image>=0.20.0",
 ]
 
 [project.optional-dependencies]
@@ -28,6 +29,7 @@ dev = [
 
 [project.scripts]
 curate-dataset = "dataset_curator.cli:main"
+check-similarity = "dataset_curator.similarity:main_cli"
 
 [tool.setuptools.packages.find]
 where = ["src"]

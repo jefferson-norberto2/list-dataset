@@ -1,5 +1,9 @@
 """Modular reference dataset curation package."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
 from dataset_curator.audit import AuditEntry, AuditLogger
 from dataset_curator.config import CurateConfig
 from dataset_curator.curator import DatasetCurator
@@ -31,6 +35,14 @@ from dataset_curator.preprocessing import (
     save_image_lossless_png,
 )
 
+if TYPE_CHECKING:
+    from dataset_curator.similarity import (
+        SimilarityResult,
+        check_image_similarity,
+        compare_images_ssim,
+        compute_ssim,
+    )
+
 __version__ = "0.1.0"
 
 __all__ = [
@@ -50,11 +62,15 @@ __all__ = [
     "NIQEFilterStage",
     "QualityFilterStage",
     "SharpnessFilterStage",
+    "SimilarityResult",
     "center_crop",
+    "check_image_similarity",
+    "compare_images_ssim",
     "compute_clipping_ratio",
     "compute_laplacian_variance",
     "compute_luminance_std",
     "compute_shannon_entropy",
+    "compute_ssim",
     "downsample_shorter_edge",
     "evaluate_csv_score",
     "find_supported_images",
@@ -63,3 +79,16 @@ __all__ = [
     "preprocess_image",
     "save_image_lossless_png",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    if name in {
+        "compute_ssim",
+        "compare_images_ssim",
+        "check_image_similarity",
+        "SimilarityResult",
+    }:
+        import dataset_curator.similarity as sim
+
+        return getattr(sim, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -138,6 +138,65 @@ options:
 
 ---
 
+## Standalone Image Similarity Verification (SSIM)
+
+The library also includes a standalone feature to assess visual similarity between two images using the **Structural Similarity Index (SSIM)** (Wang et al., 2004). This utility operates independently from the dataset curation pipeline.
+
+### Command Line: `check-similarity`
+
+The CLI tool `check-similarity` is installed automatically as an executable console script:
+
+```bash
+# Basic similarity check (default threshold: 0.8)
+check-similarity reference.png candidate.png
+
+# Custom threshold and automatic resizing if image dimensions differ
+check-similarity reference.png candidate.png --threshold 0.85 --auto-resize
+
+# Output results in JSON format
+check-similarity reference.png candidate.png --json
+```
+
+**CLI Options:**
+```
+arguments:
+  image1                Path to reference or first image.
+  image2                Path to candidate or second image.
+
+options:
+  --threshold THRESHOLD SSIM similarity threshold between 0.0 and 1.0 (default: 0.8).
+  --auto-resize         Automatically resize the second image to match the first image's dimensions.
+  --win-size WIN_SIZE   Odd window size for SSIM filter (<= min(H, W)).
+  --json                Output results in JSON format.
+```
+
+The command returns exit code `0` if images meet or exceed the similarity threshold, or `1` if dissimilar or upon error.
+
+### Python API
+
+```python
+from dataset_curator import check_image_similarity, compare_images_ssim, compute_ssim
+
+# 1. High-level evaluation with threshold decision
+result = check_image_similarity("image1.png", "image2.png", threshold=0.85, auto_resize=True)
+if result.is_similar:
+    print(f"Images are similar! SSIM: {result.score:.4f}")
+else:
+    print(f"Images are dissimilar. SSIM: {result.score:.4f} < {result.threshold}")
+
+# 2. Direct SSIM scalar calculation from file paths or NumPy arrays
+score = compare_images_ssim("image1.png", "image2.png", auto_resize=True)
+print(f"SSIM Score: {score:.4f}")
+
+# 3. Direct array computation on NumPy images (RGB or Grayscale)
+import cv2
+img1 = cv2.imread("image1.png")
+img2 = cv2.imread("image2.png")
+score = compute_ssim(img1, img2, auto_resize=True)
+```
+
+---
+
 ## Python API Usage
 
 The tool is completely modular and can be integrated directly into any Python data pipeline or PyTorch DataLoader:
