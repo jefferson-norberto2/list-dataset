@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from dataset_curator.curator.metrics.contrast import ContrastFilterStage, compute_luminance_std
+from dataset.curator.metrics import ContrastFilterStage, compute_luminance_std
 
 
 class TestContrastMetric:

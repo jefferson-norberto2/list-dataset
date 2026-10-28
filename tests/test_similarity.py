@@ -13,13 +13,13 @@ import cv2
 import numpy as np
 import pytest
 
-from dataset_curator.curator.preprocessing import ImageLoadingError
-from dataset_curator.analyse.similarity import (
+from dataset.curator import ImageLoadingError
+from dataset.analyzer import (
     SimilarityResult,
     check_image_similarity,
     compare_images_ssim,
     compute_ssim,
-    main_cli,
+    main,
 )
 
 
@@ -167,13 +167,13 @@ class TestComputeSsim:
     def test_skimage_returns_nan_or_raises(self, sample_rgb_image: np.ndarray) -> None:
         """Handled if structural_similarity returns NaN or raises Exception."""
         with patch(
-            "dataset_curator.similarity.structural_similarity",
+            "dataset.analyzer.similarity.structural_similarity",
             return_value=float("nan"),
         ):
             assert np.isnan(compute_ssim(sample_rgb_image, sample_rgb_image))
 
         with patch(
-            "dataset_curator.similarity.structural_similarity",
+            "dataset.analyzer.similarity.structural_similarity",
             side_effect=RuntimeError("internal error"),
         ):
             assert np.isnan(compute_ssim(sample_rgb_image, sample_rgb_image))
@@ -273,14 +273,14 @@ class TestCheckImageSimilarity:
 
 
 class TestMainCli:
-    """Tests for main_cli entry point."""
+    """Tests for main entry point."""
 
     def test_cli_similar_images_exit_0(
         self, saved_image_pair: tuple[Path, Path], capsys: pytest.CaptureFixture[str]
     ) -> None:
         """CLI returns exit code 0 and prints score for similar images."""
         p1, p2 = saved_image_pair
-        exit_code = main_cli([str(p1), str(p2), "--threshold", "0.8"])
+        exit_code = main([str(p1), str(p2), "--threshold", "0.8"])
         captured = capsys.readouterr()
         assert exit_code == 0
         assert "SIMILAR: SSIM score" in captured.out
@@ -295,7 +295,7 @@ class TestMainCli:
         cv2.imwrite(str(p1), np.zeros((32, 32, 3), dtype=np.uint8))
         cv2.imwrite(str(p2), np.full((32, 32, 3), 255, dtype=np.uint8))
 
-        exit_code = main_cli([str(p1), str(p2), "--threshold", "0.8"])
+        exit_code = main([str(p1), str(p2), "--threshold", "0.8"])
         captured = capsys.readouterr()
         assert exit_code == 1
         assert "DISSIMILAR: SSIM score" in captured.out
@@ -305,7 +305,7 @@ class TestMainCli:
     ) -> None:
         """CLI outputs structured JSON with expected keys when --json is passed."""
         p1, p2 = saved_image_pair
-        exit_code = main_cli([str(p1), str(p2), "--json"])
+        exit_code = main([str(p1), str(p2), "--json"])
         captured = capsys.readouterr()
         assert exit_code == 0
         data = json.loads(captured.out)
@@ -324,7 +324,7 @@ class TestMainCli:
         cv2.imwrite(str(p1), np.zeros((32, 32, 3), dtype=np.uint8))
         cv2.imwrite(str(p2), np.full((32, 32, 3), 255, dtype=np.uint8))
 
-        exit_code = main_cli([str(p1), str(p2), "--json", "--threshold", "0.9"])
+        exit_code = main([str(p1), str(p2), "--json", "--threshold", "0.9"])
         captured = capsys.readouterr()
         assert exit_code == 1
         data = json.loads(captured.out)
@@ -342,7 +342,7 @@ class TestMainCli:
         cv2.imwrite(str(p1), img1)
         cv2.imwrite(str(p2), img2)
 
-        exit_code = main_cli([str(p1), str(p2), "--auto-resize"])
+        exit_code = main([str(p1), str(p2), "--auto-resize"])
         captured = capsys.readouterr()
         assert exit_code == 0
         assert "SIMILAR" in captured.out
@@ -353,7 +353,7 @@ class TestMainCli:
         """CLI reports clean error message on stderr and exits 1 for non-existent files."""
         p1 = tmp_path / "nonexistent1.png"
         p2 = tmp_path / "nonexistent2.png"
-        exit_code = main_cli([str(p1), str(p2)])
+        exit_code = main([str(p1), str(p2)])
         captured = capsys.readouterr()
         assert exit_code == 1
         assert "Error: Image file does not exist" in captured.err
@@ -364,7 +364,7 @@ class TestMainCli:
         """CLI outputs valid JSON on error when --json is requested."""
         p1 = tmp_path / "nonexistent1.png"
         p2 = tmp_path / "nonexistent2.png"
-        exit_code = main_cli([str(p1), str(p2), "--json"])
+        exit_code = main([str(p1), str(p2), "--json"])
         captured = capsys.readouterr()
         assert exit_code == 1
         data = json.loads(captured.out)
@@ -380,18 +380,18 @@ class TestMainCli:
         cv2.imwrite(str(p1), np.ones((2, 2, 3), dtype=np.uint8))
         cv2.imwrite(str(p2), np.ones((2, 2, 3), dtype=np.uint8))
 
-        exit_code = main_cli([str(p1), str(p2)])
+        exit_code = main([str(p1), str(p2)])
         captured = capsys.readouterr()
         assert exit_code == 1
         assert "DISSIMILAR: SSIM could not be computed (NaN)" in captured.out
 
     def test_module_execution(self, saved_image_pair: tuple[Path, Path]) -> None:
-        """Executing dataset_curator.similarity as main module works."""
+        """Executing dataset.analyzer.similarity as main module works."""
         p1, p2 = saved_image_pair
         cmd = [
             sys.executable,
             "-m",
-            "dataset_curator.similarity",
+            "dataset.analyzer.similarity",
             str(p1),
             str(p2),
         ]
@@ -407,9 +407,9 @@ class TestMainCli:
         monkeypatch.setattr(
             sys,
             "argv",
-            ["dataset_curator.similarity", str(p1), str(p2)],
+            ["dataset.analyzer.similarity", str(p1), str(p2)],
         )
-        monkeypatch.delitem(sys.modules, "dataset_curator.similarity", raising=False)
+        monkeypatch.delitem(sys.modules, "dataset.analyzer.similarity", raising=False)
         with pytest.raises(SystemExit) as exc_info:
-            runpy.run_module("dataset_curator.similarity", run_name="__main__")
+            runpy.run_module("dataset.analyzer.similarity", run_name="__main__")
         assert exc_info.value.code == 0

@@ -7,6 +7,7 @@ from dataset.analyzer.similarity import (
     check_image_similarity,
     compare_images_ssim,
     compute_ssim,
+    main,
 )
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "check_image_similarity",
     "compare_images_ssim",
     "compute_ssim",
+    "main",
 ]

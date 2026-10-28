@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from dataset_curator.curator.preprocessing import (
+from dataset.curator import (
     ImageLoadingError,
     ImageResolutionError,
     center_crop,

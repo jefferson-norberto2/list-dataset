@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 import pytest
 
-from dataset_curator.curator.metrics.sharpness import (
+from dataset.curator.metrics import (
     SharpnessFilterStage,
     compute_laplacian_variance,
 )

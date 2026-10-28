@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 import pytest
 
-from dataset_curator.curator.preprocessing import (
+from dataset.curator import (
     ImageLoadingError,
     downsample_shorter_edge,
     load_image,

@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from dataset_curator.curator.metrics.clipping import ClippingFilterStage, compute_clipping_ratio
+from dataset.curator.metrics import ClippingFilterStage, compute_clipping_ratio
 
 
 class TestClippingMetric:

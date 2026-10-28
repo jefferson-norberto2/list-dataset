@@ -9,7 +9,7 @@ from __future__ import annotations
 import cv2
 import numpy as np
 
-from dataset_curator.metrics.base import FilterResult, QualityFilterStage
+from dataset.curator.metrics import FilterResult, QualityFilterStage
 
 
 def compute_color_cast_ratio(image_rgb: np.ndarray) -> float:

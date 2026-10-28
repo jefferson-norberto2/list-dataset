@@ -8,7 +8,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from dataset_curator.curator.cli import main
+from dataset.curator.cli import main
 
 
 class TestCLIIntegration:

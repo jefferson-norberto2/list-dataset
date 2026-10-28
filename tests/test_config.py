@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from dataset_curator.curator.config import CurateConfig
+from dataset.curator import CurateConfig
 
 
 class TestCurateConfigValidation:

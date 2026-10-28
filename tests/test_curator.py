@@ -9,9 +9,7 @@ import cv2
 import numpy as np
 import pytest
 
-from dataset_curator.curator.config import CurateConfig
-from dataset_curator.curator.curator import DatasetCurator
-from dataset_curator.curator.pipeline import CascadedQualityGate
+from dataset.curator import CurateConfig, DatasetCurator, CascadedQualityGate
 
 
 class AlwaysPassGate(CascadedQualityGate):
@@ -21,7 +19,7 @@ class AlwaysPassGate(CascadedQualityGate):
         pass
 
     def evaluate(self, image_rgb: np.ndarray):
-        from dataset_curator.curator.pipeline import CurationAssessment
+        from dataset.curator import CurationAssessment
 
         return CurationAssessment(
             is_pristine=True,
@@ -41,7 +39,7 @@ class AlwaysRejectGate(CascadedQualityGate):
         pass
 
     def evaluate(self, image_rgb: np.ndarray):
-        from dataset_curator.curator.pipeline import CurationAssessment
+        from dataset.curator import CurationAssessment
 
         return CurationAssessment(
             is_pristine=False,
@@ -306,7 +304,7 @@ class TestDatasetCuratorIntegration:
                 return "folder\\win.png"
 
         monkeypatch.setattr(
-            "dataset_curator.curator.load_image",
+            "dataset.curator.load_image",
             lambda _: np.zeros((600, 600, 3), dtype=np.uint8),
         )
         entry = curator.process_file(MockPath())  # type: ignore[arg-type]
@@ -448,7 +446,7 @@ class TestDatasetCuratorIntegration:
             load_calls.append(path)
             return np.zeros((100, 100, 3), dtype=np.uint8)
 
-        monkeypatch.setattr("dataset_curator.curator.load_image", mock_load)
+        monkeypatch.setattr("dataset.curator.load_image", mock_load)
 
         curator = DatasetCurator(config=config, gate=AlwaysPassGate())
         entry = curator.process_file(input_dir / "rejected.png")
@@ -474,7 +472,7 @@ class TestDatasetCuratorIntegration:
         def mock_fnf(_):
             raise FileNotFoundError("missing")
 
-        monkeypatch.setattr("dataset_curator.curator.load_image", mock_fnf)
+        monkeypatch.setattr("dataset.curator.load_image", mock_fnf)
         curator = DatasetCurator(config=config)
         e1 = curator.process_file(test_img)
         assert e1.rejection_reason == "file_not_found"
@@ -483,7 +481,7 @@ class TestDatasetCuratorIntegration:
         def mock_load_err(_):
             raise RuntimeError("load crash")
 
-        monkeypatch.setattr("dataset_curator.curator.load_image", mock_load_err)
+        monkeypatch.setattr("dataset.curator.load_image", mock_load_err)
         e2 = curator.process_file(test_img)
         assert e2.rejection_reason == "load_error: RuntimeError"
 
@@ -493,7 +491,7 @@ class TestDatasetCuratorIntegration:
         def mock_prep_err(*args, **kwargs):
             raise RuntimeError("prep crash")
 
-        monkeypatch.setattr("dataset_curator.curator.preprocess_image", mock_prep_err)
+        monkeypatch.setattr("dataset.curator.preprocess_image", mock_prep_err)
         e3 = curator.process_file(test_img)
         assert e3.rejection_reason == "preprocessing_error: RuntimeError"
 
@@ -504,7 +502,7 @@ class TestDatasetCuratorIntegration:
             raise OSError("disk full")
 
         monkeypatch.setattr(
-            "dataset_curator.curator.save_image_lossless_png", mock_save_err
+            "dataset.curator.save_image_lossless_png", mock_save_err
         )
         curator_pass = DatasetCurator(config=config, gate=AlwaysPassGate())
         e4 = curator_pass.process_file(test_img)

@@ -6,7 +6,7 @@ import math
 
 import numpy as np
 
-from dataset_curator.curator.metrics.niqe import NIQEFilterStage
+from dataset.curator.metrics import NIQEFilterStage
 
 
 class TestNIQEFilterStage:

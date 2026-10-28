@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from dataset_curator.metrics.base import FilterResult, QualityFilterStage
+from dataset.curator.metrics import FilterResult, QualityFilterStage
 
 
 def compute_{metric_name}(image_rgb: np.ndarray, gray: np.ndarray) -> float:
