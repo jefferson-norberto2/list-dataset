@@ -14,7 +14,7 @@ import cv2
 import numpy as np
 from skimage.metrics import structural_similarity
 
-from dataset_curator.preprocessing import load_image
+from dataset.curator.preprocessing import load_image
 
 
 @dataclass
@@ -212,7 +212,7 @@ def check_image_similarity(
     )
 
 
-def main_cli(argv: Sequence[str] | None = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     """CLI entry point to check similarity between two images.
 
     Args:
@@ -308,4 +308,4 @@ def main_cli(argv: Sequence[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main_cli())
+    sys.exit(main())

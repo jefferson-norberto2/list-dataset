@@ -5,10 +5,10 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from dataset_curator.config import CurateConfig
-from dataset_curator.metrics.base import FilterResult, QualityFilterStage
-from dataset_curator.metrics.csv_score import CSVScoreFilterStage
-from dataset_curator.pipeline import CascadedQualityGate
+from dataset_curator.curator.config import CurateConfig
+from dataset_curator.curator.metrics.base import FilterResult, QualityFilterStage
+from dataset_curator.curator.metrics.csv_score import CSVScoreFilterStage
+from dataset_curator.curator.pipeline import CascadedQualityGate
 
 
 class MockStage(QualityFilterStage):

@@ -9,14 +9,14 @@ from dataclasses import dataclass, field
 import cv2
 import numpy as np
 
-from dataset_curator.config import CurateConfig
-from dataset_curator.metrics.base import FilterResult, QualityFilterStage
-from dataset_curator.metrics.clipping import ClippingFilterStage
-from dataset_curator.metrics.contrast import ContrastFilterStage
-from dataset_curator.metrics.csv_score import CSVScoreFilterStage, load_csv_scores
-from dataset_curator.metrics.entropy import EntropyFilterStage
-from dataset_curator.metrics.niqe import NIQEFilterStage
-from dataset_curator.metrics.sharpness import SharpnessFilterStage
+from dataset.curator.config import CurateConfig
+from dataset.curator.metrics.base import FilterResult, QualityFilterStage
+from dataset.curator.metrics.clipping import ClippingFilterStage
+from dataset.curator.metrics.contrast import ContrastFilterStage
+from dataset.curator.metrics.csv_score import CSVScoreFilterStage, load_csv_scores
+from dataset.curator.metrics.entropy import EntropyFilterStage
+from dataset.curator.metrics.niqe import NIQEFilterStage
+from dataset.curator.metrics.sharpness import SharpnessFilterStage
 
 logger = logging.getLogger(__name__)
 

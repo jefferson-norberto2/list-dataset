@@ -28,8 +28,8 @@ dev = [
 ]
 
 [project.scripts]
-curate-dataset = "dataset_curator.cli:main"
-check-similarity = "dataset_curator.similarity:main_cli"
+curate-dataset = "dataset.curator.cli:main"
+check-similarity = "dataset.analyzer.similarity:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

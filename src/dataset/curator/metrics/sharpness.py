@@ -5,7 +5,7 @@ from __future__ import annotations
 import cv2
 import numpy as np
 
-from dataset_curator.metrics.base import FilterResult, QualityFilterStage
+from dataset.curator.metrics.base import FilterResult, QualityFilterStage
 
 
 def compute_laplacian_variance(gray: np.ndarray, ksize: int = 1) -> float:

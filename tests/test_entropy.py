@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from dataset_curator.metrics.entropy import EntropyFilterStage, compute_shannon_entropy
+from dataset_curator.curator.metrics.entropy import EntropyFilterStage, compute_shannon_entropy
 
 
 class TestEntropyMetric:

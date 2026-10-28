@@ -1,8 +1,8 @@
-"""Structural Similarity Index (SSIM) metric functions and re-exports."""
+# Image analysis and similarity assessment tools.
 
 from __future__ import annotations
 
-from dataset_curator.similarity import (
+from dataset.analyzer.similarity import (
     SimilarityResult,
     check_image_similarity,
     compare_images_ssim,

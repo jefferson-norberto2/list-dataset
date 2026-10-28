@@ -8,7 +8,7 @@ from typing import Literal
 
 import numpy as np
 
-from dataset_curator.metrics.base import FilterResult, QualityFilterStage
+from dataset.curator.metrics.base import FilterResult, QualityFilterStage
 
 logger = logging.getLogger(__name__)
 

@@ -1,4 +1,4 @@
-from dataset_curator import check_image_similarity
+from dataset.analyzer import check_image_similarity
 
 # 1. High-level evaluation with threshold decision
 img1_path = "Datasets/LISTV2/images/test/src/5265_pristine_1800.png"

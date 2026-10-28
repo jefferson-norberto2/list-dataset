@@ -13,8 +13,8 @@ import cv2
 import numpy as np
 import pytest
 
-from dataset_curator.preprocessing import ImageLoadingError
-from dataset_curator.similarity import (
+from dataset_curator.curator.preprocessing import ImageLoadingError
+from dataset_curator.analyse.similarity import (
     SimilarityResult,
     check_image_similarity,
     compare_images_ssim,

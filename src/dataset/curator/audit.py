@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, ClassVar
 
-from dataset_curator.pipeline import CurationAssessment
+from dataset.curator.pipeline import CurationAssessment
 
 logger = logging.getLogger(__name__)
 

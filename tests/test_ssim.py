@@ -6,9 +6,9 @@ import numpy as np
 import pytest
 
 import dataset_curator
-import dataset_curator.metrics
-from dataset_curator.metrics import ssim
-from dataset_curator.metrics.ssim import (
+import dataset_curator.curator.metrics
+from dataset_curator.curator.metrics import ssim
+from dataset_curator.curator.metrics.ssim import (
     SimilarityResult,
     check_image_similarity,
     compare_images_ssim,
@@ -30,7 +30,7 @@ class TestSsimReExports:
         """Verify package-level lazy imports via __getattr__."""
         assert dataset_curator.compute_ssim is compute_ssim
         assert dataset_curator.SimilarityResult is SimilarityResult
-        assert dataset_curator.metrics.compute_ssim is compute_ssim
+        assert dataset_curator.curator.metrics.compute_ssim is compute_ssim
 
         with pytest.raises(AttributeError):
             _ = dataset_curator.non_existent_symbol

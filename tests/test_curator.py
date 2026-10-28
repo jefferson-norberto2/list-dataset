@@ -9,9 +9,9 @@ import cv2
 import numpy as np
 import pytest
 
-from dataset_curator.config import CurateConfig
-from dataset_curator.curator import DatasetCurator
-from dataset_curator.pipeline import CascadedQualityGate
+from dataset_curator.curator.config import CurateConfig
+from dataset_curator.curator.curator import DatasetCurator
+from dataset_curator.curator.pipeline import CascadedQualityGate
 
 
 class AlwaysPassGate(CascadedQualityGate):
@@ -21,7 +21,7 @@ class AlwaysPassGate(CascadedQualityGate):
         pass
 
     def evaluate(self, image_rgb: np.ndarray):
-        from dataset_curator.pipeline import CurationAssessment
+        from dataset_curator.curator.pipeline import CurationAssessment
 
         return CurationAssessment(
             is_pristine=True,
@@ -41,7 +41,7 @@ class AlwaysRejectGate(CascadedQualityGate):
         pass
 
     def evaluate(self, image_rgb: np.ndarray):
-        from dataset_curator.pipeline import CurationAssessment
+        from dataset_curator.curator.pipeline import CurationAssessment
 
         return CurationAssessment(
             is_pristine=False,

@@ -8,7 +8,7 @@ from pathlib import Path
 
 import numpy as np
 
-from dataset_curator.metrics.base import FilterResult, QualityFilterStage
+from dataset.curator.metrics.base import FilterResult, QualityFilterStage
 
 IMAGE_COLUMN_CANDIDATES: tuple[str, ...] = (
     "image_name",

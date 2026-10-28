@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from dataset_curator.metrics.base import FilterResult, QualityFilterStage
+from dataset.curator.metrics.base import FilterResult, QualityFilterStage
 
 
 def compute_clipping_ratio(

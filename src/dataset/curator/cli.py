@@ -7,8 +7,8 @@ import logging
 import sys
 from pathlib import Path
 
-from dataset_curator.config import CurateConfig
-from dataset_curator.curator import DatasetCurator
+from dataset.curator.config import CurateConfig
+from dataset.curator.curator import DatasetCurator
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -162,7 +162,7 @@ def main(argv: list[str] | None = None) -> int:
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-    logger = logging.getLogger("dataset_curator")
+    logger = logging.getLogger("dataset")
 
     audit_csv = args.audit_csv or (args.output_dir / "curation_audit.csv")
 

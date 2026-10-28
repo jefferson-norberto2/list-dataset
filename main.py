@@ -1,12 +1,11 @@
 from pathlib import Path
-from dataset_curator.config import CurateConfig
-from dataset_curator.curator import DatasetCurator
+from dataset.curator import CurateConfig, DatasetCurator
 
 # 1. Custom Configuration
 config = CurateConfig(
     input_dir=Path("Datasets/UHD-IQA-database/validation"),
-    output_dir=Path("Datasets/pristine2"),
-    audit_csv_path=Path("Datasets/pristine2/audit_validation.csv"),
+    output_dir=Path("Datasets/pristine3"),
+    audit_csv_path=Path("Datasets/pristine3/audit_validation.csv"),
     csv_score_column="quality_mos",
     csv_score_path=Path("Datasets/UHD-IQA-database/uhd-iqa-metadata.csv"),
     target_dim=1800,

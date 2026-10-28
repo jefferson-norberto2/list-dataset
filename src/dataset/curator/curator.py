@@ -10,11 +10,11 @@ from typing import Any
 
 from tqdm import tqdm
 
-from dataset_curator.audit import AuditEntry, AuditLogger
-from dataset_curator.config import CurateConfig
-from dataset_curator.metrics.csv_score import load_csv_scores
-from dataset_curator.pipeline import CascadedQualityGate
-from dataset_curator.preprocessing import (
+from dataset.curator.audit import AuditEntry, AuditLogger
+from dataset.curator.config import CurateConfig
+from dataset.curator.metrics.csv_score import load_csv_scores
+from dataset.curator.pipeline import CascadedQualityGate
+from dataset.curator.preprocessing import (
     ImageLoadingError,
     ImageResolutionError,
     find_supported_images,
