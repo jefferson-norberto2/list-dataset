@@ -3,7 +3,18 @@
 from __future__ import annotations
 
 from dataset.distortion.algorithms.blur import BlurDistortion, GaussianBlur
+from dataset.distortion.algorithms.contrast import (
+    ContrastDistoriton,
+    ContrastDistortion,
+)
 from dataset.distortion.algorithms.poisson import PoissonDistortion
 from dataset.distortion.generator import DistortionGenerator
 
-__all__ = ["BlurDistortion", "DistortionGenerator", "GaussianBlur", "PoissonDistortion"]
+__all__ = [
+    "BlurDistortion",
+    "ContrastDistoriton",
+    "ContrastDistortion",
+    "DistortionGenerator",
+    "GaussianBlur",
+    "PoissonDistortion",
+]
