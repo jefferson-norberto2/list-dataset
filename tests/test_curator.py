@@ -9,7 +9,7 @@ import cv2
 import numpy as np
 import pytest
 
-from dataset.curator import CurateConfig, DatasetCurator, CascadedQualityGate
+from dataset.curator import CascadedQualityGate, CurateConfig, DatasetCurator
 
 
 class AlwaysPassGate(CascadedQualityGate):
@@ -304,7 +304,7 @@ class TestDatasetCuratorIntegration:
                 return "folder\\win.png"
 
         monkeypatch.setattr(
-            "dataset.curator.load_image",
+            "dataset.curator.curator.load_image",
             lambda _: np.zeros((600, 600, 3), dtype=np.uint8),
         )
         entry = curator.process_file(MockPath())  # type: ignore[arg-type]
@@ -446,7 +446,7 @@ class TestDatasetCuratorIntegration:
             load_calls.append(path)
             return np.zeros((100, 100, 3), dtype=np.uint8)
 
-        monkeypatch.setattr("dataset.curator.load_image", mock_load)
+        monkeypatch.setattr("dataset.curator.curator.load_image", mock_load)
 
         curator = DatasetCurator(config=config, gate=AlwaysPassGate())
         entry = curator.process_file(input_dir / "rejected.png")
@@ -472,7 +472,7 @@ class TestDatasetCuratorIntegration:
         def mock_fnf(_):
             raise FileNotFoundError("missing")
 
-        monkeypatch.setattr("dataset.curator.load_image", mock_fnf)
+        monkeypatch.setattr("dataset.curator.curator.load_image", mock_fnf)
         curator = DatasetCurator(config=config)
         e1 = curator.process_file(test_img)
         assert e1.rejection_reason == "file_not_found"
@@ -481,7 +481,7 @@ class TestDatasetCuratorIntegration:
         def mock_load_err(_):
             raise RuntimeError("load crash")
 
-        monkeypatch.setattr("dataset.curator.load_image", mock_load_err)
+        monkeypatch.setattr("dataset.curator.curator.load_image", mock_load_err)
         e2 = curator.process_file(test_img)
         assert e2.rejection_reason == "load_error: RuntimeError"
 
@@ -491,7 +491,7 @@ class TestDatasetCuratorIntegration:
         def mock_prep_err(*args, **kwargs):
             raise RuntimeError("prep crash")
 
-        monkeypatch.setattr("dataset.curator.preprocess_image", mock_prep_err)
+        monkeypatch.setattr("dataset.curator.curator.preprocess_image", mock_prep_err)
         e3 = curator.process_file(test_img)
         assert e3.rejection_reason == "preprocessing_error: RuntimeError"
 
@@ -502,7 +502,7 @@ class TestDatasetCuratorIntegration:
             raise OSError("disk full")
 
         monkeypatch.setattr(
-            "dataset.curator.save_image_lossless_png", mock_save_err
+            "dataset.curator.curator.save_image_lossless_png", mock_save_err
         )
         curator_pass = DatasetCurator(config=config, gate=AlwaysPassGate())
         e4 = curator_pass.process_file(test_img)
