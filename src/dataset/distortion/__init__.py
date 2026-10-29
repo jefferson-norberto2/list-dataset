@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataset.distortion.algorithms.poisson import PoissonDistortion
 from dataset.distortion.generator import DistortionGenerator
 
-__all__ = ["DistortionGenerator"]
+__all__ = ["DistortionGenerator", "PoissonDistortion"]

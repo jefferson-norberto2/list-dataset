@@ -289,6 +289,18 @@ generator.save_output(low_contrast, "contrast", level=3)
 # 6. Apply 1/f Pink Noise
 pink = generator.add_pink_noise(intensity=0.12, spatial_scale=1.0)
 generator.save_output(pink, "fnoise", level=3)
+
+# 7. Sequential Poisson Noise Pipeline (PoissonDistortion)
+from dataset.distortion import PoissonDistortion
+
+poisson = PoissonDistortion(image="path/to/pristine_image.png")
+# Each call to apply() round-robins to the next distortion algorithm in sequence
+out1 = poisson.apply(shot_noise=0.01, read_noise=0.001)  # 1. Standard Poisson-Gaussian
+out2 = poisson.apply(shot_noise=0.01, read_noise=0.001)  # 2. Radial vignette noise
+out3 = poisson.apply(shot_noise=0.01, read_noise=0.001)  # 3. Spatially correlated noise
+out4 = poisson.apply(shot_noise=0.01, read_noise=0.001)  # 4. Fixed-pattern column noise
+out5 = poisson.apply(shot_noise=0.01, read_noise=0.001)  # 5. Channel-dependent noise
+out6 = poisson.apply(shot_noise=0.01, read_noise=0.001)  # 6. True photon Poisson noise
 ```
 
 ---
