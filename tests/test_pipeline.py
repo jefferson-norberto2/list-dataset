@@ -5,8 +5,12 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from dataset.curator import CurateConfig, CascadedQualityGate
-from dataset.curator.metrics import FilterResult, QualityFilterStage, CSVScoreFilterStage
+from dataset.curator import CascadedQualityGate, CurateConfig
+from dataset.curator.metrics import (
+    CSVScoreFilterStage,
+    FilterResult,
+    QualityFilterStage,
+)
 
 
 class MockStage(QualityFilterStage):

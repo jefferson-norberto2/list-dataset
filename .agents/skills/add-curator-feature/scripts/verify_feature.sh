@@ -27,7 +27,7 @@ echo ""
 echo "========================================="
 echo "Step 3: Executing Test Suite & Coverage"
 echo "========================================="
-"${VENV_BIN}/python" -m pytest tests/ --cov=src/dataset_curator --cov-report=term-missing
+"${VENV_BIN}/python" -m pytest tests/ --cov=src/dataset --cov-report=term-missing
 
 echo ""
 echo "========================================="

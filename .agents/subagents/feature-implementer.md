@@ -15,12 +15,12 @@
    - For quality filters, determine the exact computational cost tier and insert at the appropriate position in the cascade.
 
 2. **Step-by-Step Implementation Flow:**
-   - Define configuration parameters in `dataset_curator/config.py` with validation.
-   - Implement metric function and filter class in `dataset_curator/metrics/<feature_name>.py`.
-   - Export public symbols in `dataset_curator/metrics/__init__.py` and `dataset_curator/__init__.py`.
-   - Wire the stage into `CascadedQualityGate` in `dataset_curator/pipeline.py`.
-   - Synchronize fields in `dataset_curator/audit.py`.
-   - Expose configurable parameters in `dataset_curator/cli.py`.
+   - Define configuration parameters in `src/dataset/curator/config.py` with validation.
+   - Implement metric function and filter class in `src/dataset/curator/metrics/<feature_name>.py`.
+   - Export public symbols in `src/dataset/curator/metrics/__init__.py` and `src/dataset/curator/__init__.py`.
+   - Wire the stage into `CascadedQualityGate` in `src/dataset/curator/pipeline.py`.
+   - Synchronize fields in `src/dataset/curator/audit.py`.
+   - Expose configurable parameters in `src/dataset/curator/cli.py`.
 
 3. **Error Resilience:**
    - Handle invalid shapes, empty arrays, division-by-zero, and `NaN` results cleanly.

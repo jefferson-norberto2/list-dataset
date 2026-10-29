@@ -17,7 +17,6 @@ from dataset.curator.metrics.sharpness import (
     compute_laplacian_variance,
 )
 
-
 __all__ = [
     "CSVScoreFilterStage",
     "ClippingFilterStage",

@@ -8,9 +8,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from dataset.curator.metrics import QualityFilterStage
 from dataset.curator.metrics import (
     CSVScoreFilterStage,
+    QualityFilterStage,
     evaluate_csv_score,
     load_csv_scores,
 )

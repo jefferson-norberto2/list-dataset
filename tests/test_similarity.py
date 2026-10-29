@@ -13,7 +13,6 @@ import cv2
 import numpy as np
 import pytest
 
-from dataset.curator import ImageLoadingError
 from dataset.analyzer import (
     SimilarityResult,
     check_image_similarity,
@@ -21,6 +20,7 @@ from dataset.analyzer import (
     compute_ssim,
     main,
 )
+from dataset.curator import ImageLoadingError
 
 
 @pytest.fixture

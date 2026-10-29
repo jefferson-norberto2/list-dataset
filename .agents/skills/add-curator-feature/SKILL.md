@@ -44,37 +44,37 @@ python .agents/skills/add-curator-feature/scripts/scaffold_metric.py \
   --rejection-reason <reason_slug>
 ```
 This generates:
-- `src/dataset_curator/metrics/<metric_name>.py`
+- `src/dataset/curator/metrics/<metric_name>.py`
 - `tests/test_<metric_name>.py`
 
 Or reference the complete implementation pattern in [Color Cast Filter Example](./examples/new_metric_example.py).
 
 #### Option B: Adding Preprocessing or I/O Features
-- Implement functions in [`src/dataset_curator/preprocessing.py`](file:///home/jmn/Devel/Python/list-dataset/src/dataset_curator/preprocessing.py).
+- Implement functions in [`src/dataset/curator/preprocessing.py`](file:///home/jmn/Devel/Python/list-dataset/src/dataset/curator/preprocessing.py).
 - Ensure image data remains 8-bit RGB `uint8` with canonical dimensions.
 
 ---
 
 ### Step 3: Wire the Feature into the Pipeline
 
-1. **Update Configuration ([`config.py`](file:///home/jmn/Devel/Python/list-dataset/src/dataset_curator/config.py)):**
+1. **Update Configuration ([`config.py`](file:///home/jmn/Devel/Python/list-dataset/src/dataset/curator/config.py)):**
    - Add new attributes to `CurateConfig` with appropriate defaults.
    - Add validation inside `CurateConfig.__post_init__()`.
 
-2. **Register in Pipeline ([`pipeline.py`](file:///home/jmn/Devel/Python/list-dataset/src/dataset_curator/pipeline.py)):**
+2. **Register in Pipeline ([`pipeline.py`](file:///home/jmn/Devel/Python/list-dataset/src/dataset/curator/pipeline.py)):**
    - Insert the new stage into `CascadedQualityGate.stages` at the correct computational cost position.
    - Add the metric field to `CurationAssessment`.
 
-3. **Update Audit Logging ([`audit.py`](file:///home/jmn/Devel/Python/list-dataset/src/dataset_curator/audit.py)):**
+3. **Update Audit Logging ([`audit.py`](file:///home/jmn/Devel/Python/list-dataset/src/dataset/curator/audit.py)):**
    - Add column to `AuditLogger.FIELDNAMES`.
    - Add field to `AuditEntry` and map it in `AuditEntry.to_row()`.
 
-4. **Expose in CLI ([`cli.py`](file:///home/jmn/Devel/Python/list-dataset/src/dataset_curator/cli.py)):**
+4. **Expose in CLI ([`cli.py`](file:///home/jmn/Devel/Python/list-dataset/src/dataset/curator/cli.py)):**
    - Add corresponding command-line flags in `build_parser()`.
    - Pass arguments to `CurateConfig` in `main()`.
 
 5. **Export in Package `__init__.py`:**
-   - Update [`src/dataset_curator/metrics/__init__.py`](file:///home/jmn/Devel/Python/list-dataset/src/dataset_curator/metrics/__init__.py) and [`src/dataset_curator/__init__.py`](file:///home/jmn/Devel/Python/list-dataset/src/dataset_curator/__init__.py).
+   - Update [`src/dataset/curator/metrics/__init__.py`](file:///home/jmn/Devel/Python/list-dataset/src/dataset/curator/metrics/__init__.py) and [`src/dataset/curator/__init__.py`](file:///home/jmn/Devel/Python/list-dataset/src/dataset/curator/__init__.py).
 
 ---
 

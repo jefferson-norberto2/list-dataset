@@ -24,7 +24,7 @@
 2. **Execution & Coverage Validation:**
    - Run tests using the project virtual environment:
      ```bash
-     /home/jmn/Devel/Python/list-dataset/.venv/bin/python -m pytest tests/ --cov=src/dataset_curator --cov-report=term-missing
+     /home/jmn/Devel/Python/list-dataset/.venv/bin/python -m pytest tests/ --cov=src/dataset --cov-report=term-missing
      ```
    - Ensure 0 test failures and overall line coverage $\ge 90\%$.
    - Run linting checks:
@@ -42,7 +42,7 @@ When invoking this subagent via `invoke_subagent`, use a prompt structured like:
 ```text
 You are a QA Test Engineer for dataset-curator.
 Task: Write comprehensive tests for the newly added feature [FEATURE_NAME].
-Code path: src/dataset_curator/[PATH]
+Code path: src/dataset/[PATH]
 
 Requirements:
 1. Create tests/test_[FEATURE_NAME].py testing mathematical accuracy, boundary thresholds, and edge cases.

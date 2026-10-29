@@ -78,7 +78,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from dataset_curator.metrics.{metric_name} import (
+from dataset.curator.metrics.{metric_name} import (
     {class_name}FilterStage,
     compute_{metric_name},
 )
@@ -134,7 +134,7 @@ def main() -> int:
     rejection_reason = args.rejection_reason or f"low_{metric_name}"
 
     repo_root = Path(__file__).resolve().parents[4]
-    metric_file = repo_root / "src" / "dataset_curator" / "metrics" / f"{metric_name}.py"
+    metric_file = repo_root / "src" / "dataset" / "curator" / "metrics" / f"{metric_name}.py"
     test_file = repo_root / "tests" / f"test_{metric_name}.py"
 
     if metric_file.exists():
@@ -165,9 +165,9 @@ def main() -> int:
     print(f"Created unit test  : {test_file.relative_to(repo_root)}")
     print("\nNext steps:")
     print(f"1. Implement computation in {metric_file.name}")
-    print("2. Export stage in src/dataset_curator/metrics/__init__.py")
-    print("3. Wire into CascadedQualityGate in src/dataset_curator/pipeline.py")
-    print("4. Add configuration parameters in src/dataset_curator/config.py and cli.py")
+    print("2. Export stage in src/dataset/curator/metrics/__init__.py")
+    print("3. Wire into CascadedQualityGate in src/dataset/curator/pipeline.py")
+    print("4. Add configuration parameters in src/dataset/curator/config.py and cli.py")
     print("5. Run .agents/skills/add-curator-feature/scripts/verify_feature.sh")
     return 0
 

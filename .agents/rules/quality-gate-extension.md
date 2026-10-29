@@ -6,7 +6,7 @@ When modifying existing stages or introducing new metrics to the cascaded qualit
 
 ## 1. Stage Implementation Contract
 
-Every filter stage must implement the `QualityFilterStage` protocol from `dataset_curator.metrics.base`:
+Every filter stage must implement the `QualityFilterStage` protocol from `dataset.curator.metrics.base`:
 
 ```python
 class QualityFilterStage(Protocol):
@@ -30,6 +30,7 @@ Stages MUST be inserted into `CascadedQualityGate.stages` strictly according to 
 
 | Tier | Typical Operation | Examples |
 |:---|:---|:---|
+| **Tier 0: Metadata / CSV Lookup** | $O(1)$ dictionary lookups | MOS quality scores, precomputed ratings |
 | **Tier 1: Pixel Comparisons** | $O(N)$ elementwise masks | Clipping, Dead pixel counts |
 | **Tier 2: Single-pass Statistics** | $O(N)$ accumulator loops | Luminance std, Mean brightness |
 | **Tier 3: Histogram Binning** | $O(N)$ 256-bin counts | Shannon entropy, Color histograms |
@@ -51,7 +52,7 @@ The pipeline runner must stop immediately upon the first stage returning `passed
 ## 4. Audit Log Field Synchronization
 
 When adding a new metric:
-1. Add the metric property to `CurationAssessment` in `pipeline.py`.
-2. Add the column name to `AuditLogger.FIELDNAMES` in `audit.py`.
+1. Add the metric property to `CurationAssessment` in `dataset.curator.pipeline`.
+2. Add the column name to `AuditLogger.FIELDNAMES` in `dataset.curator.audit`.
 3. Add the field to `AuditEntry` and its `to_row()` mapping.
 4. Verify that existing audit logs parse backwards-compatibly.

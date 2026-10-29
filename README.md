@@ -1,72 +1,102 @@
-# Dataset Curator
+# Dataset Curator & Vision Processing Toolkit
 
-A modular, production-ready Python tool and library designed to filter and curate pristine reference image datasets from high-resolution sources (such as UHD-IQA) based on objective quality metrics from literature.
+A modular, production-ready Python tool and library designed to filter and curate pristine reference image datasets from high-resolution sources (such as UHD-IQA), verify image similarity via SSIM, and generate realistic synthetic distortions across multiple severity levels.
 
 ---
 
-## Architecture & Design Principles
+## Repository Structure
 
-The dataset curation pipeline follows a **Cascaded Quality Gate (Early-Exit Strategy)**. Filters are executed in order of strictly increasing computational cost. When an image crop fails any filter, the pipeline terminates immediately for that crop, recording the failure reason in the audit log and avoiding downstream compute costs.
+The project is structured under the `dataset` namespace package with three core subsystems:
+
+```
+src/dataset/
+├── curator/                  # Reference dataset curation pipeline & quality gate
+│   ├── metrics/              # Modular filter stages (clipping, contrast, entropy, sharpness, niqe, csv_score)
+│   ├── audit.py              # Structured CSV audit logging (AuditEntry, AuditLogger)
+│   ├── cli.py                # Console script CLI: curate-dataset
+│   ├── config.py             # Immutable configuration settings (CurateConfig)
+│   ├── curator.py            # DatasetCurator batch processing engine
+│   ├── pipeline.py           # CascadedQualityGate and CurationAssessment
+│   └── preprocessing.py      # Lanczos4 downsampling, center crop, lossless PNG I/O
+├── analyzer/                 # Visual similarity analysis and comparison
+│   ├── __init__.py           # Exports: check_image_similarity, compare_images_ssim, compute_ssim
+│   └── similarity.py         # SSIM implementation and console script CLI: check-similarity
+└── distortion/               # Synthetic image degradation and distortion generation
+    ├── __init__.py           # Exports: DistortionGenerator
+    └── generator.py          # 6 degradation types (blur, noise, jpeg, jp2k, contrast, pink noise)
+```
+
+---
+
+## 1. Dataset Curation Pipeline (`dataset.curator`)
+
+### Architecture & Cascaded Early-Exit Strategy
+
+The dataset curation pipeline follows a **Cascaded Quality Gate (Early-Exit Strategy)**. Filters are executed in order of strictly increasing computational cost. When an image fails any filter stage, the pipeline terminates immediately for that candidate, recording the failure reason in the audit log and avoiding downstream compute costs.
 
 ```
                     +---------------------------+
                     |  Raw High-Res Input Image |
                     +-------------+-------------+
                                   |
-                                  v
-                    +---------------------------+
-                    |  Lanczos4 Downsampling    | (Shorter edge rescaled to 512px)
-                    +-------------+-------------+
-                                  |
-                                  v
-                    +---------------------------+
-                    |     512x512 Center Crop   |
-                    +-------------+-------------+
-                                  |
-      ================ Cascaded Quality Gate Cascade ================
-                                  |
-            [Stage 1: O(N)]       v
-      +---------------------------+       FAIL
-      |  Exposure / Clipping      | ---------------> [Rejection: clipping_exceeded]
-      +-------------+-------------+
-                    | PASS
-            [Stage 2: O(N)]       v
-      +---------------------------+       FAIL
-      | Dynamic Range / Contrast  | ---------------> [Rejection: low_contrast]
-      +-------------+-------------+
-                    | PASS
-            [Stage 3: O(N)]       v
-      +---------------------------+       FAIL
-      |  Shannon Entropy Density  | ---------------> [Rejection: low_entropy]
-      +-------------+-------------+
-                    | PASS
-          [Stage 4: O(N*K^2)]     v
-      +---------------------------+       FAIL
-      | Focus Sharpness (Laplace) | ---------------> [Rejection: blurry]
-      +-------------+-------------+
-                    | PASS
-          [Stage 5: Deep/PyIQA]   v
-      +---------------------------+       FAIL
-      | No-Reference IQA (NIQE)   | ---------------> [Rejection: high_niqe / nan]
+            [Stage 0: O(1)]       v       FAIL
+      +---------------------------+ ---------------> [Rejection: low_csv_score / not_found]
+      | External CSV Quality Score| (Checked before decoding image)
       +-------------+-------------+
                     | PASS
                     v
-    +-------------------------------+
-    |  Save Lossless PNG (Comp: 0)  |  --> <original_stem>_pristine_512.png
-    +-------------------------------+
+      +---------------------------+
+      |  Lanczos4 Downsampling    | (Shorter edge rescaled to target_dim)
+      +-------------+-------------+
                     |
                     v
-    +-------------------------------+
-    | Structured CSV Audit Logging  |  --> Records all stages & metrics
-    +-------------------------------+
+      +---------------------------+
+      |        Center Crop        | (e.g. 512x512 or 1800x1800)
+      +-------------+-------------+
+                    |
+      ================ Cascaded Quality Gate Cascade ================
+                    |
+            [Stage 1: O(N)]       v       FAIL
+      +---------------------------+ ---------------> [Rejection: clipping_exceeded]
+      |  Exposure / Saturated Pxls|
+      +-------------+-------------+
+                    | PASS
+            [Stage 2: O(N)]       v       FAIL
+      +---------------------------+ ---------------> [Rejection: low_contrast]
+      | Dynamic Range / Contrast  |
+      +-------------+-------------+
+                    | PASS
+            [Stage 3: O(N)]       v       FAIL
+      +---------------------------+ ---------------> [Rejection: low_entropy]
+      |  Shannon Entropy Density  |
+      +-------------+-------------+
+                    | PASS
+          [Stage 4: O(N*K^2)]     v       FAIL
+      +---------------------------+ ---------------> [Rejection: blurry]
+      | Focus Sharpness (Laplace) |
+      +-------------+-------------+
+                    | PASS
+          [Stage 5: Deep/PyIQA]   v       FAIL
+      +---------------------------+ ---------------> [Rejection: high_niqe / niqe_nan]
+      | No-Reference IQA (NIQE)   |
+      +-------------+-------------+
+                    | PASS
+                    v
+      +-------------------------------+
+      |  Save Lossless PNG (Comp: 0)  |  --> <original_stem>_pristine_<target_dim>.png
+      +-------------------------------+
+                    |
+                    v
+      +-------------------------------+
+      | Structured CSV Audit Logging  |  --> Records all evaluated stages & metrics
+      +-------------------------------+
 ```
 
----
-
-## Cascaded Quality Metrics & Thresholds
+### Cascaded Quality Metrics & Thresholds
 
 | Order | Metric Stage | Computational Cost | Formulation / Implementation | Default Threshold | Failure Reason |
 |:---:|:---|:---:|:---|:---:|:---|
+| **0** | **External CSV Score** | $O(1)$ lookup | MOS or subjective quality score from external metadata CSV | $\ge 0.70$ (configurable) | `low_csv_score` / `csv_score_not_found` |
 | **1** | **Clipping / Exposure** | Lowest ($O(N)$ comparisons) | Proportion of pixels where luminance $\le 1$ or $\ge 254$ | $\le 1.0\%$ (`0.01`) | `clipping_exceeded` |
 | **2** | **Dynamic Range / Contrast** | Low ($O(N)$ pass) | Standard deviation of grayscale luminance $\sigma = \text{std}(Y)$ | $\ge 40.0$ | `low_contrast` |
 | **3** | **Information Density** | Low-Medium (Histogram $O(N)$) | Shannon entropy $H = -\sum p_i \log_2(p_i)$ bits/pixel | $\ge 7.0$ bits/pixel | `low_entropy` |
@@ -75,11 +105,29 @@ The dataset curation pipeline follows a **Cascaded Quality Gate (Early-Exit Stra
 
 ---
 
+## 2. Image Similarity Verification (`dataset.analyzer`)
+
+Provides standalone pairwise similarity assessment between images using the **Structural Similarity Index (SSIM)** (Wang et al., 2004), completely decoupled from the curation pipeline.
+
+---
+
+## 3. Synthetic Distortion Generator (`dataset.distortion`)
+
+Applies 6 controlled optical and digital degradations across 5 standardized severity levels:
+1. **Gaussian Blur:** Spatial low-pass filtering across varying $\sigma$ kernels.
+2. **Poisson-Gaussian Noise (AWGN):** Combined shot noise (signal-dependent Poisson) and read noise (Gaussian).
+3. **JPEG Compression:** DCT-based lossy quantization.
+4. **JPEG 2000 Compression:** Discrete Wavelet Transform (DWT) compression with variable bit-rate ratios.
+5. **Contrast Decrements:** Global contrast reduction centered around neutral gray ($0.5$).
+6. **Pink Noise ($1/f$):** 2D spatial frequency pink noise synthesized via 2D FFT.
+
+---
+
 ## Installation
 
 ### Prerequisites
 - Python 3.13+
-- CUDA-compatible GPU (optional, automatically falls back to CPU)
+- CUDA-compatible GPU (optional; automatically falls back to CPU)
 
 ### Setup
 ```bash
@@ -98,7 +146,7 @@ pip install -e ".[dev]"
 
 ## Command Line Interface (CLI)
 
-The CLI tool `curate-dataset` is installed automatically as an executable console script.
+### 1. `curate-dataset`
 
 ```bash
 curate-dataset \
@@ -115,8 +163,7 @@ curate-dataset \
   --device auto
 ```
 
-### CLI Arguments & Options
-
+#### CLI Options:
 ```
 options:
   -h, --help            Show this help message and exit
@@ -130,83 +177,37 @@ options:
   --min-entropy         Min Shannon entropy in bits/pixel (default: 7.0)
   --min-laplacian-var   Min variance of Laplacian for focus sharpness (default: 120.0)
   --max-niqe            Max allowable NIQE score (default: 3.5)
+  --csv-score-path      Optional path to external CSV containing image quality scores
+  --csv-score-column    Column name in external CSV containing the quality scores
+  --min-csv-score       Minimum allowable quality score from external CSV (default: 0.7)
   --device              Device for tensor calculations: 'auto', 'cuda', 'cpu' (default: auto)
   --png-compression     Lossless PNG compression level 0-9 (default: 0, uncompressed lossless)
   --quiet               Disable the interactive progress bar
   --verbose, -v         Enable detailed debug logs
 ```
 
----
-
-## Standalone Image Similarity Verification (SSIM)
-
-The library also includes a standalone feature to assess visual similarity between two images using the **Structural Similarity Index (SSIM)** (Wang et al., 2004). This utility operates independently from the dataset curation pipeline.
-
-### Command Line: `check-similarity`
-
-The CLI tool `check-similarity` is installed automatically as an executable console script:
+### 2. `check-similarity`
 
 ```bash
 # Basic similarity check (default threshold: 0.8)
 check-similarity reference.png candidate.png
 
-# Custom threshold and automatic resizing if image dimensions differ
+# Custom threshold with automatic resizing if dimensions differ
 check-similarity reference.png candidate.png --threshold 0.85 --auto-resize
 
-# Output results in JSON format
+# JSON formatted output
 check-similarity reference.png candidate.png --json
-```
-
-**CLI Options:**
-```
-arguments:
-  image1                Path to reference or first image.
-  image2                Path to candidate or second image.
-
-options:
-  --threshold THRESHOLD SSIM similarity threshold between 0.0 and 1.0 (default: 0.8).
-  --auto-resize         Automatically resize the second image to match the first image's dimensions.
-  --win-size WIN_SIZE   Odd window size for SSIM filter (<= min(H, W)).
-  --json                Output results in JSON format.
-```
-
-The command returns exit code `0` if images meet or exceed the similarity threshold, or `1` if dissimilar or upon error.
-
-### Python API
-
-```python
-from dataset_curator import check_image_similarity, compare_images_ssim, compute_ssim
-
-# 1. High-level evaluation with threshold decision
-result = check_image_similarity("image1.png", "image2.png", threshold=0.85, auto_resize=True)
-if result.is_similar:
-    print(f"Images are similar! SSIM: {result.score:.4f}")
-else:
-    print(f"Images are dissimilar. SSIM: {result.score:.4f} < {result.threshold}")
-
-# 2. Direct SSIM scalar calculation from file paths or NumPy arrays
-score = compare_images_ssim("image1.png", "image2.png", auto_resize=True)
-print(f"SSIM Score: {score:.4f}")
-
-# 3. Direct array computation on NumPy images (RGB or Grayscale)
-import cv2
-img1 = cv2.imread("image1.png")
-img2 = cv2.imread("image2.png")
-score = compute_ssim(img1, img2, auto_resize=True)
 ```
 
 ---
 
 ## Python API Usage
 
-The tool is completely modular and can be integrated directly into any Python data pipeline or PyTorch DataLoader:
+### Curation Pipeline
 
 ```python
 from pathlib import Path
-from dataset_curator.config import CurateConfig
-from dataset_curator.curator import DatasetCurator
-from dataset_curator.pipeline import CascadedQualityGate
-from dataset_curator.preprocessing import preprocess_image, load_image
+from dataset.curator import CurateConfig, DatasetCurator, CascadedQualityGate, load_image, preprocess_image
 
 # 1. Custom Configuration
 config = CurateConfig(
@@ -240,32 +241,87 @@ else:
     print(f"Rejected: {assessment.rejection_reason}")
 ```
 
+### Image Similarity Assessment
+
+```python
+from dataset.analyzer import check_image_similarity, compare_images_ssim, compute_ssim
+
+# 1. High-level evaluation with threshold decision
+result = check_image_similarity("image1.png", "image2.png", threshold=0.85, auto_resize=True)
+if result.is_similar:
+    print(f"Images are similar! SSIM: {result.score:.4f}")
+else:
+    print(f"Images are dissimilar. SSIM: {result.score:.4f} < {result.threshold}")
+
+# 2. Direct SSIM scalar calculation from file paths
+score = compare_images_ssim("image1.png", "image2.png", auto_resize=True)
+print(f"SSIM Score: {score:.4f}")
+```
+
+### Synthetic Distortion Generation
+
+```python
+from dataset.distortion import DistortionGenerator
+
+generator = DistortionGenerator()
+generator.change_image("path/to/pristine_image.png")
+
+# 1. Apply Gaussian Blur
+blurred = generator.add_gaussian_blur(sigma=2.0)
+generator.save_output(blurred, "blur", level=3)
+
+# 2. Apply Poisson-Gaussian Noise
+noisy = generator.add_poisson_gaussian_noise(shot_noise=0.03, read_noise=0.002)
+generator.save_output(noisy, "awgn", level=3)
+
+# 3. Apply JPEG Compression
+jpeg_dist = generator.add_jpeg_compression(quality=10)
+generator.save_output(jpeg_dist, "jpeg", level=3)
+
+# 4. Apply JPEG 2000 Compression
+jp2k_dist = generator.add_jpeg2000_compression(compression_ratio=7)
+generator.save_output(jp2k_dist, "jpeg2000", level=3)
+
+# 5. Apply Contrast Reduction
+low_contrast = generator.change_contrast(alpha=0.4)
+generator.save_output(low_contrast, "contrast", level=3)
+
+# 6. Apply 1/f Pink Noise
+pink = generator.add_pink_noise(intensity=0.12, spatial_scale=1.0)
+generator.save_output(pink, "fnoise", level=3)
+```
+
 ---
 
 ## Structured CSV Audit Log Format
 
-Every processed candidate file is recorded in a structured CSV audit file. Columns:
+Every candidate image evaluated by `dataset.curator` is recorded in a CSV audit file. Columns:
 
 1. `filename`: Relative path or filename of source image.
 2. `pristine`: `True` or `False`.
-3. `rejection_reason`: `accepted`, `clipping_exceeded`, `low_contrast`, `low_entropy`, `blurry`, `high_niqe`, `resolution_too_small`, or `corrupted_or_unreadable`.
-4. `clipping_ratio`: Proportion of pixels saturated $\le 1$ or $\ge 254$ (or empty if skipped).
-5. `luminance_std`: Grayscale standard deviation (or empty if skipped).
-6. `entropy`: Shannon entropy in bits/pixel (or empty if skipped).
-7. `laplacian_variance`: Focus sharpness variance (or empty if skipped).
-8. `niqe_score`: PyIQA NIQE score (or empty if skipped).
-9. `output_path`: Absolute path of saved pristine PNG crop (or empty if rejected).
+3. `rejection_reason`: `accepted`, `low_csv_score`, `csv_score_not_found`, `csv_score_nan`, `clipping_exceeded`, `low_contrast`, `low_entropy`, `blurry`, `high_niqe`, `resolution_too_small`, `corrupted_or_unreadable`, or `file_not_found`.
+4. `clipping_ratio`: Proportion of pixels saturated $\le 1$ or $\ge 254$ (empty if skipped by early exit).
+5. `luminance_std`: Grayscale standard deviation (empty if skipped by early exit).
+6. `entropy`: Shannon entropy in bits/pixel (empty if skipped by early exit).
+7. `laplacian_variance`: Focus sharpness variance (empty if skipped by early exit).
+8. `niqe_score`: PyIQA NIQE score (empty if skipped by early exit).
+9. `csv_score`: External CSV MOS / quality score (empty if feature disabled).
+10. `output_path`: Absolute path of saved pristine PNG crop (empty if rejected).
 
 ---
 
-## Running Unit Tests & Verification
-
-The test suite covers unit tests for every individual metric, geometric preprocessing, early-exit short-circuiting, configuration validation, and end-to-end integration:
+## Running Unit Tests & Quality Verification
 
 ```bash
 # Run pytest with code coverage
-pytest tests/ --cov=dataset_curator --cov-report=term-missing
+pytest tests/ --cov=src/dataset --cov-report=term-missing
 
 # Run ruff code quality checks
 ruff check src tests
+
+# Run ruff formatting check
+ruff format --check src tests
+
+# Or run the all-in-one verification script
+bash .agents/skills/add-curator-feature/scripts/verify_feature.sh
 ```
