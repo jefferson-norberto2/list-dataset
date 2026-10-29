@@ -429,4 +429,3 @@ class BlurDistortion:
 
         cv2.imwrite(str(dest), img_to_write, [cv2.IMWRITE_PNG_COMPRESSION, 0])
         return dest.resolve()
-

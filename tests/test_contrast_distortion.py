@@ -8,10 +8,7 @@ import cv2
 import numpy as np
 import pytest
 
-from dataset.distortion.algorithms.contrast import (
-    ContrastDistoriton,
-    ContrastDistortion,
-)
+from dataset.distortion.algorithms.contrast import ContrastDistortion
 
 
 @pytest.fixture
@@ -337,10 +334,3 @@ class TestSaveOutput:
         assert saved_path.is_file()
         loaded = cv2.imread(str(saved_path), cv2.IMREAD_GRAYSCALE)
         assert loaded.shape == (64, 64)
-
-
-class TestContrastDistoritonAlias:
-    """Tests verifying backward-compatibility alias."""
-
-    def test_alias(self) -> None:
-        assert ContrastDistoriton is ContrastDistortion
