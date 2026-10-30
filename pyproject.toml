@@ -19,6 +19,7 @@ dependencies = [
     "torch>=2.0.0",
     "pyiqa>=0.1.8",
     "scikit-image>=0.20.0",
+    "pywavelets (>=1.10.0,<2.0.0)",
 ]
 
 [project.optional-dependencies]

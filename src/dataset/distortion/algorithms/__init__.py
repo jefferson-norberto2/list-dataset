@@ -7,6 +7,7 @@ from dataset.distortion.algorithms.blur import BlurDistortion
 from dataset.distortion.algorithms.contrast import ContrastDistortion
 from dataset.distortion.algorithms.fnoise import FnoiseDistortion
 from dataset.distortion.algorithms.jpeg import JpegDistortion
+from dataset.distortion.algorithms.jpeg2000 import Jpeg2000Distortion
 from dataset.distortion.algorithms.poisson import PoissonDistortion
 
 __all__ = [
@@ -14,6 +15,7 @@ __all__ = [
     "BlurDistortion",
     "ContrastDistortion",
     "FnoiseDistortion",
+    "Jpeg2000Distortion",
     "JpegDistortion",
     "PoissonDistortion",
 ]
