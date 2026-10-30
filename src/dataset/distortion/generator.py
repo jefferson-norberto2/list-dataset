@@ -30,7 +30,13 @@ DEFAULT_LEVELS: dict[str, list[Any]] = {
     "pgn_shot": [0.005, 0.015, 0.03, 0.05, 0.08],
     "pgn_read": [0.0005, 0.001, 0.002, 0.003, 0.005],
     "jpeg_quality": [20, 15, 10, 8, 3],  # Quality decreases with level
-    "jp2k_ratio": [1, 4, 7, 10, 13],  # Compression increases with level
+    "jp2k_ratio": [
+        10,
+        25,
+        50,
+        100,
+        200,
+    ],  # Compression ratio increases with level (10x to 200x)
     "contrast_alpha": [0.6, 0.5, 0.4, 0.3, 0.2],  # Contrast decreases with level
     "pink_intensity": [0.03, 0.07, 0.12, 0.18, 0.25],  # Noise increases with level
 }

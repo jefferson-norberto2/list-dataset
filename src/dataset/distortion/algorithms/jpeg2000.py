@@ -169,9 +169,13 @@ class Jpeg2000Distortion(BaseDistortion):
         if img_u8.ndim == 3 and img_u8.shape[2] == 3:
             img_u8 = cv2.cvtColor(img_u8, cv2.COLOR_RGB2BGR)
 
+        # In OpenCV, IMWRITE_JPEG2000_COMPRESSION_X1000 represents (target_size / original_size) * 1000.
+        # A compression ratio of R (e.g. 20:1) corresponds to target size 1/R (e.g. 5% -> 50 / 1000).
+        ratio = max(1.0, float(compression_ratio))
+        target_size_x1000 = int(np.clip(round(1000.0 / ratio), 1, 1000))
         encode_params = [
             int(cv2.IMWRITE_JPEG2000_COMPRESSION_X1000),
-            int(compression_ratio * 10),
+            target_size_x1000,
         ]
         success, encoded_buffer = cv2.imencode(".jp2", img_u8, encode_params)
         if not success:
