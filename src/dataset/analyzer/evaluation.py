@@ -317,6 +317,7 @@ def discover_distortion_pairs(
     dist_iterator = dist_path.rglob("*") if recursive else dist_path.glob("*")
     matched_pairs: list[DistortionPair] = []
     unmatched_files: list[Path] = []
+    resolved_ref = ref_path.resolve()
 
     for file_path in dist_iterator:
         if (
@@ -324,6 +325,13 @@ def discover_distortion_pairs(
             or file_path.suffix.lower() not in SUPPORTED_IMAGE_EXTENSIONS
         ):
             continue
+
+        # Skip pristine reference files if ref_dir is located inside dist_dir
+        try:
+            if file_path.resolve().is_relative_to(resolved_ref):
+                continue
+        except (ValueError, AttributeError):
+            pass
 
         parsed = parse_distorted_filename(file_path)
         if parsed is None:
