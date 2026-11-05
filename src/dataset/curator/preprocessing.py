@@ -159,6 +159,26 @@ def center_crop(
     start_x = (w - crop_w) // 2
     return image[start_y : start_y + crop_h, start_x : start_x + crop_w]
 
+def resize_image(image: np.ndarray, target_size: tuple[int, int]) -> np.ndarray:
+    """Resizes an image to the specified target size using Lanczos4 interpolation.
+
+    Args:
+        image: Input image of shape (H, W, C) or (H, W).
+        target_size: Tuple (target_height, target_width) specifying the new dimensions.
+
+    Returns:
+        np.ndarray: Resized image of shape (target_height, target_width, C) or (target_height, target_width).
+
+    Raises:
+        ValueError: If target_size has non-positive dimensions.
+    """
+    target_h, target_w = target_size
+    if target_h <= 0 or target_w <= 0:
+        raise ValueError(f"Target size must have positive dimensions, got {target_size}")
+
+    resized = cv2.resize(image, (target_w, target_h), interpolation=cv2.INTER_AREA)
+    return resized
+
 
 def preprocess_image(
     image: np.ndarray,
